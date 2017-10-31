@@ -6,7 +6,7 @@ import scala.meta._
 object ImplicitParamsToCSV {
 
   def apply(): Unit = {
-    val results = SemanticdbFileWalker.run { ctx =>
+    SemanticdbFileWalker.run { ctx =>
       val file: String = ctx.input match {
         case Input.VirtualFile(path, _) => path
         case Input.File(path, _) => path.toString
@@ -58,10 +58,9 @@ object ImplicitParamsToCSV {
       val params = paramsFuns.groupBy(_.param).keys.toSet
       val funs = paramsFuns.groupBy(_.fun).keys
 
-      CSV.writeCSV(params, "params.csv")
-      CSV.writeCSV(funs, "funs.csv")
-      CSV.writeCSV(paramsFuns, "params-funs.csv")
-
+      CSV.writeCSV(params, s"${ctx.projectPath}/params.csv")
+      CSV.writeCSV(funs, s"${ctx.projectPath}/funs.csv")
+      CSV.writeCSV(paramsFuns, s"${ctx.projectPath}/params-funs.csv")
 
       val funsWithTypeParamRelations =
         for {
@@ -80,9 +79,9 @@ object ImplicitParamsToCSV {
       val typeParams = funsWithTypeParamRelations.groupBy(_.param).keys.toSet
       val funsWithTypeParams = funsWithTypeParamRelations.groupBy(_.fun).keys
 
-      CSV.writeCSV(typeParams, "typeparams-params.csv")
-      CSV.writeCSV(funsWithTypeParams, "typeparams-funs.csv")
-      CSV.writeCSV(funsWithTypeParamRelations, "typeparams-relations.csv")
+      CSV.writeCSV(typeParams, s"${ctx.projectPath}/typeparams-params.csv")
+      CSV.writeCSV(funsWithTypeParams, s"${ctx.projectPath}/typeparams-funs.csv")
+      CSV.writeCSV(funsWithTypeParamRelations, s"${ctx.projectPath}/typeparams-relations.csv")
     }
 
   }

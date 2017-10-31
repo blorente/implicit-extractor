@@ -11,7 +11,7 @@ import scala.util.control.NonFatal
 import org.langmeta.internal.semanticdb.{schema => s}
 
 
-case class SemanticCtx(database: Database) {
+case class SemanticCtx(database: Database, projectPath: AbsolutePath) {
   def input = database.documents.head.input
   val file: String = input match {
     case Input.VirtualFile(path, _) => path
@@ -87,14 +87,15 @@ object SemanticdbFileWalker {
   val rootPath = "target/justafew"
   val root = AbsolutePath(rootPath)
 
-  def run[T](f: SemanticCtx => T): mutable.Buffer[(Path, T)] = {
-    val results = new CopyOnWriteArrayList[(Path, T)]
+  def run[T](f: SemanticCtx => T): Unit = {
+    var projectPath: AbsolutePath = root
+    val results = new CopyOnWriteArrayList[T]
     def visit(path: Path): Unit =
       try {
         val sdb = s.Database.parseFrom(Files.readAllBytes(path))
         val mdb = sdb.toDb(None)
-        val ctx = SemanticCtx(mdb)
-        results.add(path -> f(ctx))
+        val ctx = SemanticCtx(mdb, projectPath)
+        results.add(f(ctx))
         print(".")
       } catch {
         case NonFatal(e) =>
@@ -103,18 +104,20 @@ object SemanticdbFileWalker {
           e.printStackTrace()
       }
     import scala.collection.JavaConverters._
-    val files = Files
-      .walk(root.toNIO)
-      .iterator()
-      .asScala
-      .filter { file =>
-        Files.isRegularFile(file) &&
-          PathIO.extension(file) == "semanticdb"
-      }
-      .toVector
-      .par
-    files.foreach(visit)
-    results.asScala
+    val dirs = Files.list(root.toNIO)
+    dirs.forEach { project =>
+      projectPath = AbsolutePath(s"$rootPath/${project.getFileName}")
+      val files = Files
+        .walk(project.toAbsolutePath)
+        .iterator()
+        .asScala
+        .filter { file =>
+          Files.isRegularFile(file) &&
+            PathIO.extension(file) == "semanticdb"
+        }
+        .toVector
+        .par
+      files.foreach(visit)
+    }
   }
-
 }
