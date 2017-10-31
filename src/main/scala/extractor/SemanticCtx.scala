@@ -126,13 +126,12 @@ object SemanticdbFileWalker {
 
   def run[T](f: SemanticCtx => T): Unit = {
     var projectPath: AbsolutePath = root
-    val results = new CopyOnWriteArrayList[T]
     def visit(path: Path): Unit =
       try {
         val sdb = s.Database.parseFrom(Files.readAllBytes(path))
         val mdb = sdb.toDb(None)
         val ctx = SemanticCtx(mdb, projectPath)
-        results.add(f(ctx))
+        f(ctx)
         print(".")
       } catch {
         case NonFatal(e) =>
@@ -144,6 +143,7 @@ object SemanticdbFileWalker {
     val dirs = Files.list(root.toNIO)
     dirs.forEach { project =>
       projectPath = AbsolutePath(s"$rootPath/${project.getFileName}")
+      println(s"Analyzing: ${projectPath}")
       val files = Files
         .walk(project.toAbsolutePath)
         .iterator()
