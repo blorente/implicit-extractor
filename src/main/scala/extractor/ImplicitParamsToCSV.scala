@@ -14,7 +14,7 @@ object ImplicitParamsToCSV {
       }
       val syntheticImplicits =
         for {
-          syn <- ctx.dindex.synthetics
+          syn <- ctx.index.synthetics
           name <- syn.names
           symbol = name.symbol
           den <- ctx.denotation(symbol) if den.isImplicit
