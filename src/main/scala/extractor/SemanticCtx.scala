@@ -121,7 +121,7 @@ case class SemanticCtx(database: Database, projectPath: AbsolutePath) {
 }
 
 object SemanticdbFileWalker {
-  val rootPath = "target/justafew"
+  val rootPath = "target/projects"
   val root = AbsolutePath(rootPath)
 
   def run[T](f: SemanticCtx => T): Unit = {
@@ -133,6 +133,7 @@ object SemanticdbFileWalker {
         val ctx = SemanticCtx(mdb, projectPath)
         f(ctx)
         print(".")
+	//println(path)
       } catch {
         case NonFatal(e) =>
           val st = e.getStackTrace
@@ -143,7 +144,7 @@ object SemanticdbFileWalker {
     val dirs = Files.list(root.toNIO)
     dirs.forEach { project =>
       projectPath = AbsolutePath(s"$rootPath/${project.getFileName}")
-      println(s"Analyzing: ${projectPath}")
+      print(s"Analyzing: ${projectPath}")
       val files = Files
         .walk(project.toAbsolutePath)
         .iterator()
@@ -155,6 +156,7 @@ object SemanticdbFileWalker {
         .toVector
         .par
       files.foreach(visit)
+      println(" ")
     }
   }
 }
