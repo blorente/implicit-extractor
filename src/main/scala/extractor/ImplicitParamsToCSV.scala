@@ -22,16 +22,6 @@ object ImplicitParamsToCSV {
           syn -> ImplicitParam(ctx, symbol, den)
         }
 
-      val syntheticTypeParams =
-        for {
-          syn <- ctx.index.synthetics
-          name <- syn.names
-          symbol = name.symbol
-          den <- ctx.denotation(symbol) if (den.isType || den.isClass || den.isObject || den.isTrait) && !den.isImplicit
-        } yield {
-          TypeParam(ctx, symbol, den, syn.position.end)
-        }
-
       val syntheticApplies = ctx.index.synthetics.filter(_.names.exists(_.toString() == "apply"))
 
       val allApps = ctx.tree collect {
@@ -61,27 +51,6 @@ object ImplicitParamsToCSV {
       CSV.writeCSV(params, s"${ctx.projectPath}/params.csv")
       CSV.writeCSV(funs, s"${ctx.projectPath}/funs.csv")
       CSV.writeCSV(paramsFuns, s"${ctx.projectPath}/params-funs.csv")
-
-      val funsWithTypeParamRelations =
-        for {
-          app <- allApps
-          typeParam <- syntheticTypeParams filter(_.pos == app.nameEnd)
-          syntheticApply = syntheticApplies find {
-            x => x.position.end >= app.term.pos.start && x.position.end <= app.term.pos.end
-          }
-        } yield {
-          syntheticApply match {
-            case Some(synth) => FunApplyWithTypeParam(SyntheticApply(ctx, synth, file, app.params), typeParam)
-            case None => FunApplyWithTypeParam(FunApply(ctx, app, file), typeParam)
-          }
-        }
-
-      val typeParams = funsWithTypeParamRelations.groupBy(_.param).keys.toSet
-      val funsWithTypeParams = funsWithTypeParamRelations.groupBy(_.fun).keys
-
-      CSV.writeCSV(typeParams, s"${ctx.projectPath}/typeparams-params.csv")
-      CSV.writeCSV(funsWithTypeParams, s"${ctx.projectPath}/typeparams-funs.csv")
-      CSV.writeCSV(funsWithTypeParamRelations, s"${ctx.projectPath}/typeparams-relations.csv")
     }
 
   }

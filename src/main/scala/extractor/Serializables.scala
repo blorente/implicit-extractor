@@ -17,15 +17,8 @@ final case class ImplicitParam(ctx: SemanticCtx, symbol: Symbol, denot: Denotati
   }
   val kind: String = ctx.getKind(denot)
 
-/*
-  val typeKind: String = denot.names.headOption match {
-    case Some(n) => getTypeKind(n.symbol)
-    case None => getTypeKind(symbol)
-  }
-*/
-
-  override val csvHeader: Seq[String] = Seq("id", "clazz", "type", "kind", "name")//, "type-description")
-  override val csvValues: Seq[String] = Seq(id, clazz, typee, kind, name)//, typeKind)
+  override val csvHeader: Seq[String] = Seq("id", "clazz", "type", "kind", "name")
+  override val csvValues: Seq[String] = Seq(id, clazz, typee, kind, name)
 
 }
 
@@ -44,15 +37,9 @@ final case class TypeParam(ctx: SemanticCtx, symbol: Symbol, denot: Denotation, 
   }
   val kind: String = ctx.getKind(denot)
 
-  /*
-  val typeKind: String = denot.names.headOption match {
-    case Some(n) => ctx.getTypeKind(n.symbol)
-    case None => ctx.getTypeKind(symbol)
-  }
-  */
 
-  override val csvHeader: Seq[String] = Seq("id", "clazz", "type", "kind", "name")//, "type-description")
-  override val csvValues: Seq[String] = Seq(id, clazz, typee, kind, name)//, typeKind)
+  override val csvHeader: Seq[String] = Seq("id", "clazz", "type", "kind", "name")
+  override val csvValues: Seq[String] = Seq(id, clazz, typee, kind, name)
 
 }
 
