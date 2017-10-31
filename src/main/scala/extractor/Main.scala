@@ -18,7 +18,7 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    val report = PrintWalk()
-    printReport(report)
+    val report = ImplicitParamsToCSV()
+    // printReport(report)
   }
 }

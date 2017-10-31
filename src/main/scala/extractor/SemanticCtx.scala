@@ -10,9 +10,77 @@ import scala.meta._
 import scala.util.control.NonFatal
 import org.langmeta.internal.semanticdb.{schema => s}
 
+
 case class SemanticCtx(database: Database) {
   def input = database.documents.head.input
+  val file: String = input match {
+    case Input.VirtualFile(path, _) => path
+    case Input.File(path, _) => path.toString
+    case _ => ""
+  }
+
   def tree: Source = input.parse[Source].get
+  implicit val index = EagerInMemorySemanticdbIndex(database)
+  def dindex = index.withDocuments(index.documents.filter(_.input == input))
+
+  def denotation(s: Symbol): Option[Denotation] = dindex.denotation(s)
+  def denotation(t: Tree): Option[Denotation] = dindex.denotation(t)
+
+
+  def qualifiedName(symbol: Term): String = {
+    symbol match {
+      case fun: Term.Name => {
+        s"${index.symbol(fun).getOrElse(s"<unknown fun: ${fun}>")}"
+      }
+      case fun: Term.Select => {
+        s"${index.symbol(fun.name).getOrElse(qualifiedName(fun.name))}"
+      }
+      case fun: Term.ApplyType => {
+        qualifiedName(fun.fun)
+      }
+      case fun: Term.Apply => {
+        index.symbol(fun).getOrElse(qualifiedName(fun.fun)).toString
+      }
+      case fun: Term.ApplyInfix => {
+        index.symbol(fun).getOrElse(qualifiedName(fun.op)).toString
+      }
+      case other => {
+        Console.withOut(Console.err) { println(s"[error] Function type unknown: ${other.structure}") }
+        throw new RuntimeException()
+      }
+    }
+  }
+
+  def getKind(denot: Denotation): String = {
+    denot match {
+      case x: Denotation if x.isVal && x.isLazy => "lazy val"
+      case x: Denotation if x.isVal => "val"
+      case x: Denotation if x.isVar => "var"
+      case x: Denotation if x.isDef => "def"
+      case x: Denotation if x.isObject => "object"
+      case x: Denotation if x.isParam => "param"
+      case x: Denotation if x.isMacro => "macro"
+      case x: Denotation => s"<unknown: ${x.structure}>"
+    }
+  }
+
+  def getTypeKind(denot: Denotation): String = {
+    denot match {
+      case den => {
+        var kind: String = den match {
+          case x if x.isClass && x.isCase => "case class"
+          case x if x.isClass && !x.isCase => "class"
+          case x if x.isObject => "object"
+          case x if x.isTrait => "trait"
+          case _ => ""
+        }
+        if (den.isImplicit) kind = s"implicit $kind"
+        if (den.isFinal) kind = s"final $kind"
+        if (den.isLazy) kind = s"lazy $kind"
+        kind
+      }
+    }
+  }
 }
 
 object SemanticdbFileWalker {
