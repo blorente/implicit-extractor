@@ -12,7 +12,8 @@ object ImplicitParamsToCSV {
         case Input.File(path, _) => path.toString
         case _ => ""
       }
-      val syntheticImplicits =
+
+      lazy val syntheticImplicits =
         for {
           syn <- ctx.index.synthetics
           name <- syn.names
@@ -22,14 +23,14 @@ object ImplicitParamsToCSV {
           syn -> ImplicitParam(ctx, symbol, den)
         }
 
-      val syntheticApplies = ctx.index.synthetics.filter(_.names.exists(_.toString() == "apply"))
+      lazy val syntheticApplies = ctx.index.synthetics.filter(_.names.exists(_.toString() == "apply"))
 
-      val allApps = ctx.tree collect {
+      lazy val allApps = ctx.tree collect {
         case x: Term.Apply => AppTerm(x, x.args.size, x.fun.pos.end)
         case x: Term.Name => AppTerm(x, 0, x.pos.end)
       }
 
-      val paramsFuns =
+      lazy val paramsFuns =
         for {
           app <- allApps
           param <- syntheticImplicits collect {
